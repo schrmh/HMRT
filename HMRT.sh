@@ -100,3 +100,70 @@ defIP=192.168.178.16
 
 # ========================================================
 
+cd $HMRTdir
+usrchoice="0"
+# title Home Menu Rebuilding Tool [By TheDeKay] #do later. Open new shell and set title
+clear
+#call :cPrint 7C #do later; may be hard
+echo "                                                                    Home Menu Rebuilding Tool v$HMRTver $HMRTch"
+#call :cPrint 79 "                                 
+echo "by TheDeKay & schrmh "
+#call :cPrint 71 
+echo "                                                                                                Thanks to Asia81 and Zan'"
+#call :cPrint 78 "     
+echo "http://axities.github.io                     _________________________________________________________"
+echo
+echo   [1] Extract CIA
+echo   [2] Build encrypted CIA
+echo   [3] Clean Folder
+echo   [4] Install via FBI (Network Install)
+echo   [5] Decompress all LZ files
+echo   [6] Recompress all LZ files
+echo   [7] Copy to SD (Auto-detect)
+echo   [8] Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4)
+echo   [9] Generate ncchinfo.bin
+echo   [Q] Exit program
+echo
+echo ">      Press your choice [Number]: "
+usrchoice=$? #errorlevel? https://unix.stackexchange.com/questions/305200/returns-errorlevel-0-instead-of-4
+clear
+# https://askubuntu.com/questions/1705/how-can-i-create-a-select-menu-in-a-shell-script
+choice=("1" "2" "3" "4" "5" "6" "7" "8" "9" "Q")
+select opt in "${choice[@]}"
+do
+    case $opt in
+        "1")
+            jumpto $EXTRACT
+            ;;
+        "2")
+            jumpto $BUILD
+            ;;
+        "3")
+            jumpto $CLEAN
+            ;;
+        "4")
+            jumpto $FBI
+            ;;
+        "5")
+            jumpto $DECOMP
+            ;;
+        "6")
+            jumpto $RECOMP
+            ;;
+        "7")
+            jumpto $RECOMP
+            ;;
+        "8")
+            echo "you chose choice 2"
+            ;;
+        "9")
+            jumpto $NCCHINFO
+            ;;
+        "Q") #may save us some lines later..
+            break
+            ;;
+        *) echo "invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
+    esac
+done
+
+
