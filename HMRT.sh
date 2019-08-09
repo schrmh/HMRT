@@ -2,11 +2,18 @@
 # include this boilerplate
 function jumpto
 {
+    #echo UNSER $PWD
     label=$1
     cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
     eval "$cmd"
     exit
 }
+
+start=${1:-"start"}
+
+jumpto $start
+
+start:
 
 #Windows batch variables:
 # Overview: https://ss64.com/nt/syntax-args.html
@@ -55,7 +62,10 @@ function jumpto
 
 # if NOT exist
 # https://stackoverflow.com/questions/638975/how-do-i-tell-if-a-regular-file-does-not-exist-in-bash
-# Kind of equivalent?: if ! [ -e "$file" ]; then fi
+# https://stackoverflow.com/questions/59838/check-if-a-directory-exists-in-a-shell-script
+# Kind of equivalent?: 
+# FILES: if ! [ -e "$file" ]; then fi 
+# DIRECTORIES: if [ ! -d "$DIRECTORY" ]; then fi
 
 # set /p variablename="TEXT"
 # https://ryanstutorials.net/bash-scripting-tutorial/bash-input.php
@@ -65,25 +75,25 @@ function jumpto
 
 
 
-
-dp0=$(dirname "$(readlink -fn "$0")") #folder script is in
-
+#folder script is in. CAUTION: DO NOT ADD COMMENT AFTER THE NEXT LINE!
+#dp0=$(dirname "$(readlink -fn "$0")")
+dp0="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#echo $dp0
 
 echo "Home Menu Rebuilding Tool [By TheDeKay & schrmh]"
 HMRTver=0.8-L1
-HMRTch=[Dev]  
+HMRTch="[Dev]"  
 
-cd dp0 #switch to shell script file's drive
-if [ -n "$1" ] #if parameter not empty
+#switch to shell script file's drive:
+cd "$dp0"
+if [ -n "$1" ]; #if parameter not empty
 then
     ext=$(echo  $1  | sed 's/.*\././')
-	if [ $ext == ".cia" ]
-    then
+    if [ $ext = ".cia" ]; then
         ciaName=$dp0/$(basename $1 .cia) #@reader: remove $dp0/ if it doesn't work..
         expName="$ciaName"_edited
-    elif [ $ext == ".bin" ]
-    then
-		jumpto LZDECOMPRESSOR
+    elif [ $ext = ".bin" ]; then
+        jumpto LZDECOMPRESSOR
     fi
 fi
 
@@ -99,17 +109,18 @@ fi
 
 encheader=NCCH.encheader
 HMRTdir=$dp0/HMRT
-xordir=xorpads
-LogFile="LZ.log"
-ciaName="HomeMenu" #$dp0/HomeMenu did not work
+xordir=$dp0/xorpads
+LogFile="$dp0/LZ.log"
+ciaName="$dp0/HomeMenu" #doesn't work always..
 expName="$ciaName"_edited
 
-START:
+STARTEN:
 defIP=192.168.178.16
 
 # ========================================================
 
-cd $HMRTdir
+#echo $HMRTdir
+#cd $HMRTdir
 usrchoice=0
 # title Home Menu Rebuilding Tool [By TheDeKay] #do later. Open new shell and set title
 clear
@@ -177,7 +188,7 @@ done
 
 EXTRACT:
 #title Home Menu Rebuilding Tool [Extracting]
-if ! [ -e "$ciaName.cia" ]; then
+if ! [ -e "$(basename $ciaName .cia).cia" ]; then
     echo "Couldn't find CIA file."
 	echo "You can specify a default CIA Name"
 	echo "in the USER VARIABLES.(example ciaName=HomeMenu^)"
@@ -185,3 +196,33 @@ if ! [ -e "$ciaName.cia" ]; then
 	echo
 	read -p "Enter filename (no extension): " ciaName
 fi
+cd $HMRTdir #cases didn't work.. this is why we change dir now..
+rm *.0000.*
+wine ctrtool.exe "$ciaName.cia" --content=Content
+shopt -s nullglob
+for S in *.0000.* #set ~nxS name and extension of S
+do
+    cxi0=$S
+done
+wine 3dstool.exe -xvtf cxi $cxi0 --header NCCH.Header --exh DecryptedExHeader.bin --exefs DecryptedExeFS.bin --romfs DecryptedRomFS.bin --logo Logo.bcma.LZ --plain PlainRGN.bin
+wine 3dstool.exe -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
+rm -rf ../ExtractedRomFS
+wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
+if ! [ -d "../ExtractedRomFS" ]; then
+    echo "PENIS"
+    #dpnxF d‎rive, p‎ath, base‎n‎ame and e‎x‎tension of the current file.
+	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
+	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exefs_norm.xorpad"; do efsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exheader.xorpad"; do exhxor=$(readlink -f $F); done
+	wine 3dstool.exe -xvtf cxi "$cxi0" --header NCCH.Header --exh DecryptedExHeader.bin --exh-xor "$exhxor" --exefs DecryptedExeFS.bin --exefs-xor "$efsxor" --romfs DecryptedRomFS.bin --romfs-xor "$rfsxor" --plain PlainRGN.bin
+	wine 3dstool.exe -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
+	wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
+	if ! [ -e "$encheader" ]; then cp NCCH.Header $encheader; fi
+	encheader=NCCH.Header
+fi
+if [ "$usrchoice" != 8 ]; then
+    cd "$dp0"
+    jumpto STARTEN
+fi
+DECOMP:
