@@ -83,7 +83,7 @@ then
         expName="$ciaName"_edited
     elif [ $ext == ".bin" ]
     then
-		jumpto $LZDECOMPRESSOR
+		jumpto LZDECOMPRESSOR
     fi
 fi
 
@@ -98,10 +98,10 @@ fi
 # SDDrive: Letter for the SD Drive
 
 encheader=NCCH.encheader
-HMRTdir=dp0/HMRT
-xordir=dp0/xorpads
-LogFile="dp0/LZ.log"
-ciaName=dp0/HomeMenu
+HMRTdir=$dp0/HMRT
+xordir=xorpads
+LogFile="LZ.log"
+ciaName="HomeMenu" #$dp0/HomeMenu did not work
 expName="$ciaName"_edited
 
 START:
@@ -110,7 +110,7 @@ defIP=192.168.178.16
 # ========================================================
 
 cd $HMRTdir
-usrchoice="0"
+usrchoice=0
 # title Home Menu Rebuilding Tool [By TheDeKay] #do later. Open new shell and set title
 clear
 #call :cPrint 7C #do later; may be hard
@@ -122,16 +122,16 @@ echo "                                                                          
 #call :cPrint 78 "     
 echo "http://axities.github.io                     _________________________________________________________"
 echo
-echo   [1] Extract CIA
-echo   [2] Build encrypted CIA
-echo   [3] Clean Folder
-echo   [4] Install via FBI (Network Install)
-echo   [5] Decompress all LZ files
-echo   [6] Recompress all LZ files
-echo   [7] Copy to SD (Auto-detect)
-echo   [8] Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4)
-echo   [9] Generate ncchinfo.bin
-echo   [Q] Exit program
+echo   "[1] Extract CIA"
+echo   "[2] Build encrypted CIA"
+echo   "[3] Clean Folder"
+echo   "[4] Install via FBI (Network Install)"
+echo   "[5] Decompress all LZ files"
+echo   "[6] Recompress all LZ files"
+echo   "[7] Copy to SD (Auto-detect)"
+echo   "[8] Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4)"
+echo   "[9] Generate ncchinfo.bin"
+echo   "[Q] Exit program"
 echo
 echo ">      Press your choice [Number]: "
 usrchoice=$? #errorlevel? https://unix.stackexchange.com/questions/305200/returns-errorlevel-0-instead-of-4
@@ -142,47 +142,46 @@ select opt in "${choice[@]}"
 do
     case $opt in
         "1")
-            jumpto $EXTRACT
+            jumpto EXTRACT
             ;;
         "2")
-            jumpto $BUILD
+            jumpto BUILD
             ;;
         "3")
-            jumpto $CLEAN
+            jumpto CLEAN
             ;;
         "4")
-            jumpto $FBI
+            jumpto FBI
             ;;
         "5")
-            jumpto $DECOMP
+            jumpto DECOMP
             ;;
         "6")
-            jumpto $RECOMP
+            jumpto RECOMP
             ;;
         "7")
-            jumpto $RECOMP
+            jumpto RECOMP
             ;;
         "8")
-            echo "you chose choice 2"
+            #Continue
             ;;
         "9")
-            jumpto $NCCHINFO
+            jumpto NCCHINFO
             ;;
         "Q") #may save us some lines later..
             break
             ;;
-        *) echo "invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
+        *) echo "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
     esac
 done
 
 EXTRACT:
 #title Home Menu Rebuilding Tool [Extracting]
-
 if ! [ -e "$ciaName.cia" ]; then
     echo "Couldn't find CIA file."
-	echo You can specify a default CIA Name
-	echo in the USER VARIABLES.(example ciaName=HomeMenu^)
-	echo Or simply drag a CIA to extract onto this Tool.
+	echo "You can specify a default CIA Name"
+	echo "in the USER VARIABLES.(example ciaName=HomeMenu^)"
+	echo "Or simply drag a CIA to extract onto this Tool."
 	echo
 	read -p "Enter filename (no extension): " ciaName
 fi
