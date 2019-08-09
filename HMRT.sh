@@ -53,6 +53,15 @@ function jumpto
 # https://de.wikibooks.org/wiki/Batch-Programmierung:_Batch-Befehle#!_(Ausrufezeichen)
 # https://ss64.com/nt/prompt.html
 
+# if NOT exist
+# https://stackoverflow.com/questions/638975/how-do-i-tell-if-a-regular-file-does-not-exist-in-bash
+# Kind of equivalent?: if ! [ -e "$file" ]; then fi
+
+# set /p variablename="TEXT"
+# https://ryanstutorials.net/bash-scripting-tutorial/bash-input.php
+# https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
+# Kind of equivalent?: read -p "TEXT" variablename
+
 
 
 
@@ -166,4 +175,14 @@ do
     esac
 done
 
+EXTRACT:
+#title Home Menu Rebuilding Tool [Extracting]
 
+if ! [ -e "$ciaName.cia" ]; then
+    echo "Couldn't find CIA file."
+	echo You can specify a default CIA Name
+	echo in the USER VARIABLES.(example ciaName=HomeMenu^)
+	echo Or simply drag a CIA to extract onto this Tool.
+	echo
+	read -p "Enter filename (no extension): " ciaName
+fi
