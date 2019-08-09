@@ -8,6 +8,9 @@ function jumpto
     eval "$cmd"
     exit
 }
+function pause(){
+   read -p "$*"
+}
 
 start=${1:-"start"}
 
@@ -22,7 +25,7 @@ start:
 # https://www.reddit.com/r/linuxquestions/comments/1jlgsw/can_someone_explain_this_bash_string_for_me/
 # https://stackoverflow.com/questions/207959/equivalent-of-dp0-in-sh
 # http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_002.htm
-# Kind of equivalent?: $(dirname "$(readlink -fn "$0")")
+# Kind of equivalent?: $(dirname "$(readlink -fn "$0")")
 # Or better just to use dirname $0?
 
 # if NOT [%1]==[] () checks wether parameter is NOT empty
@@ -33,7 +36,7 @@ start:
 
 # %~x1 extends to the extension e.g. .txt
 # https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
-# Kind pf equivalent?: $(echo  $1  | sed 's/.*\././')
+# Kind pf equivalent?: $(echo  $1  | sed 's/.*\././')
 
 # %~dpn1 means drive e.g. C: + path e.g. /something/ + name e.g. HomeMenu without extension and bracketing quotes
 # https://www.imagemagick.org/Usage/windows/
@@ -76,7 +79,7 @@ start:
 
 
 #folder script is in. CAUTION: DO NOT ADD COMMENT AFTER THE NEXT LINE!
-#dp0=$(dirname "$(readlink -fn "$0")")
+#dp0=$(dirname "$(readlink -fn "$0")")
 dp0="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #echo $dp0
 
@@ -88,7 +91,7 @@ HMRTch="[Dev]"
 cd "$dp0"
 if [ -n "$1" ]; #if parameter not empty
 then
-    ext=$(echo  $1  | sed 's/.*\././')
+    ext=$(echo  $1  | sed 's/.*\././')
     if [ $ext = ".cia" ]; then
         ciaName=$dp0/$(basename $1 .cia) #@reader: remove $dp0/ if it doesn't work..
         expName="$ciaName"_edited
@@ -226,3 +229,53 @@ if [ "$usrchoice" != 8 ]; then
     jumpto STARTEN
 fi
 DECOMP:
+cd $dp0
+echo "LZ Decompressionlog [$dp0/$me]" >> $LogFile
+echo =====================================================>> $LogFile
+cntT=0
+cntS=0
+#title Home Menu Rebuilding Tool [Decompressor]
+#for F in "ExtractedRomFS/*LZ.bin"
+shopt -s nullglob
+for F in ./*LZ.bin ./**/*LZ.bin #recursive; maybe change this so that only specific folders are affected.. #WIP: doesn't work yet
+do  
+    d=$(dirname -- "$F")
+    echo FILE $F
+    echo DIR $d
+	cntT=$(($cntT+1))
+    fn=$(basename $F .bin) #E.g. miiverse_intro_LZ
+    #set file=!fn:~0,-3!.!fn:~-2,2! #WTF?
+    file=$(echo $fn | tr '_' '.') #E.g. miiverse_intro.LZ
+	echo "Decompressing: $file"
+	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct...
+	#if exist "%%~nF.lz" (
+	if ! [ -e "$file" ]; 
+	then 
+		rm $F #> NUL
+		echo PARENT ${PWD}
+		mv $fn.lz $d/$(basename $file .LZ).lz
+		#$(dirname "$(readlink -fn "$($(basename $file .LZ).lz)")")
+		#ExtractedRomFS/$(basename $file .LZ).lz
+		#move "%%~nF.lz" "%%~dpF!file!" > NUL
+		echo $date $F "decompressed!" >> $LogFile #WIP: different format needed for date
+		cntS=$(($cntS+1))
+    else
+		echo $date $F "couldn't be decompressed" >> $LogFile #WIP: different format needed for date
+	fi
+done
+echo $date "Finished $cntS/$cntT decompressed" >> $LogFile #WIP: different format needed for date
+echo =====================================================>> $LogFile
+cd $HMRTdir
+if [ "$usrchoice" != 8 ]; then
+    cd "$dp0"
+    jumpto STARTEN
+fi
+
+echo "Contents of the CIA file have been extracted"
+echo "All LZ files have been decompressed"
+echo "Do your Edits now."
+# nemo $dp0/ExtractedRomFS" #Open folder.. Dunno wether I should do this. Disabled for now.
+echo
+pause 'Press any key to continue with recompressing and rebuilding.'
+
+:RECOMP
