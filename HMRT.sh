@@ -1,5 +1,5 @@
 #!/bin/bash
-# include this boilerplate
+#include this boilerplate
 function jumpto
 {
     #echo UNSER $PWD
@@ -25,18 +25,20 @@ start:
 # https://www.reddit.com/r/linuxquestions/comments/1jlgsw/can_someone_explain_this_bash_string_for_me/
 # https://stackoverflow.com/questions/207959/equivalent-of-dp0-in-sh
 # http://openbook.rheinwerk-verlag.de/shell_programmierung/shell_011_002.htm
-# Kind of equivalent?: $(dirname "$(readlink -fn "$0")")
+# Kind of equivalent?: $(dirname "$(readlink -fn "$0")")
+
 # Or better just to use dirname $0?
 
 # if NOT [%1]==[] () checks wether parameter is NOT empty
 # https://www.ibm.com/support/knowledgecenter/de/ssw_aix_72/osmanagement/korn_shell_conditional_exp.html
 # https://www.cyberciti.biz/faq/unix-linux-bash-script-check-if-variable-is-empty/
 # https://developer.ibm.com/tutorials/l-bash-parameters/
-# Kind of equivalent?: if [ -n "$1" ] then fi
+# Kind of equivalent?: if [ -n "$1" ] then fi
 
 # %~x1 extends to the extension e.g. .txt
 # https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
-# Kind pf equivalent?: $(echo  $1  | sed 's/.*\././')
+# Kind pf equivalent?: $(echo  $1  | sed 's/.*\././')
+
 
 # %~dpn1 means drive e.g. C: + path e.g. /something/ + name e.g. HomeMenu without extension and bracketing quotes
 # https://www.imagemagick.org/Usage/windows/
@@ -79,7 +81,8 @@ start:
 
 
 #folder script is in. CAUTION: DO NOT ADD COMMENT AFTER THE NEXT LINE!
-#dp0=$(dirname "$(readlink -fn "$0")")
+#dp0=$(dirname "$(readlink -fn "$0")")
+
 dp0="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 #echo $dp0
 
@@ -91,7 +94,8 @@ HMRTch="[Dev]"
 cd "$dp0"
 if [ -n "$1" ]; #if parameter not empty
 then
-    ext=$(echo  $1  | sed 's/.*\././')
+    ext=$(echo  $1  | sed 's/.*\././')
+
     if [ $ext = ".cia" ]; then
         ciaName=$dp0/$(basename $1 .cia) #@reader: remove $dp0/ if it doesn't work..
         expName="$ciaName"_edited
@@ -133,7 +137,7 @@ echo "                                                                    Home M
 echo "by TheDeKay & schrmh "
 #call :cPrint 71 
 echo "                                                                                                Thanks to Asia81 and Zan'"
-#call :cPrint 78 "     
+#call :cPrint 78 "     y
 echo "http://axities.github.io                     _________________________________________________________"
 echo
 echo   "[1] Extract CIA"
@@ -148,13 +152,12 @@ echo   "[9] Generate ncchinfo.bin"
 echo   "[Q] Exit program"
 echo
 echo ">      Press your choice [Number]: "
-usrchoice=$? #errorlevel? https://unix.stackexchange.com/questions/305200/returns-errorlevel-0-instead-of-4
 clear
 # https://askubuntu.com/questions/1705/how-can-i-create-a-select-menu-in-a-shell-script
 choice=("1" "2" "3" "4" "5" "6" "7" "8" "9" "Q")
-select opt in "${choice[@]}"
+select usrchoice in "${choice[@]}"
 do
-    case $opt in
+    case $usrchoice in
         "1")
             jumpto EXTRACT
             ;;
@@ -174,10 +177,11 @@ do
             jumpto RECOMP
             ;;
         "7")
-            jumpto RECOMP
+            jumpto COPYSD
             ;;
         "8")
             #Continue
+            jumpto CONTINUE
             ;;
         "9")
             jumpto NCCHINFO
@@ -189,6 +193,7 @@ do
     esac
 done
 
+CONTINUE:
 EXTRACT:
 #title Home Menu Rebuilding Tool [Extracting]
 if ! [ -e "$(basename $ciaName .cia).cia" ]; then
@@ -212,7 +217,7 @@ wine 3dstool.exe -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS -
 rm -rf ../ExtractedRomFS
 wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
 if ! [ -d "../ExtractedRomFS" ]; then
-    echo "PENIS"
+    echo "Contact me @derberg:matrix.org"
     #dpnxF d‎rive, p‎ath, base‎n‎ame and e‎x‎tension of the current file.
 	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
 	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
@@ -235,35 +240,29 @@ echo =====================================================>> $LogFile
 cntT=0
 cntS=0
 #title Home Menu Rebuilding Tool [Decompressor]
-#for F in "ExtractedRomFS/*LZ.bin"
 shopt -s nullglob
-for F in ./*LZ.bin ./**/*LZ.bin #recursive; maybe change this so that only specific folders are affected.. #WIP: doesn't work yet
+for F in $(find ./Extracted[RE][ox][me]FS -name '*LZ.bin') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
 do  
     d=$(dirname -- "$F")
     echo FILE $F
     echo DIR $d
 	cntT=$(($cntT+1))
     fn=$(basename $F .bin) #E.g. miiverse_intro_LZ
-    #set file=!fn:~0,-3!.!fn:~-2,2! #WTF?
     file=$(echo $fn | tr '_' '.') #E.g. miiverse_intro.LZ
 	echo "Decompressing: $file"
 	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct...
-	#if exist "%%~nF.lz" (
 	if ! [ -e "$file" ]; 
 	then 
 		rm $F #> NUL
 		echo PARENT ${PWD}
 		mv $fn.lz $d/$(basename $file .LZ).lz
-		#$(dirname "$(readlink -fn "$($(basename $file .LZ).lz)")")
-		#ExtractedRomFS/$(basename $file .LZ).lz
-		#move "%%~nF.lz" "%%~dpF!file!" > NUL
-		echo $date $F "decompressed!" >> $LogFile #WIP: different format needed for date
+		echo $(date +%s) $F "decompressed!" >> $LogFile #unixtime
 		cntS=$(($cntS+1))
     else
-		echo $date $F "couldn't be decompressed" >> $LogFile #WIP: different format needed for date
+		echo $(date +%s) $F "couldn't be decompressed" >> $LogFile #unixtime
 	fi
 done
-echo $date "Finished $cntS/$cntT decompressed" >> $LogFile #WIP: different format needed for date
+echo $(date +%s) "Finished $cntS/$cntT decompressed" >> $LogFile #unixtime
 echo =====================================================>> $LogFile
 cd $HMRTdir
 if [ "$usrchoice" != 8 ]; then
