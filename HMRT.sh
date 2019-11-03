@@ -235,7 +235,7 @@ if [ "$usrchoice" != 8 ]; then
 fi
 DECOMP:
 cd $dp0
-echo "LZ Decompressionlog [$dp0/$me]" >> $LogFile
+echo "LZ Decompressionlog [$dp0]" >> $LogFile
 echo =====================================================>> $LogFile
 cntT=0
 cntS=0
@@ -248,10 +248,10 @@ do
     echo DIR $d
 	cntT=$(($cntT+1))
     fn=$(basename $F .bin) #E.g. miiverse_intro_LZ
-    file=$(echo $fn | tr '_' '.') #E.g. miiverse_intro.LZ
+    file=$(echo $fn | tr '_' '.') #E.g. miiverse_intro.LZ ; maybe append tr 'LZ' 'lz'
 	echo "Decompressing: $file"
-	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct...
-	if ! [ -e "$file" ]; 
+	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct... Is miiverse_intro_LZ.lz correct?
+	if [ -e "$fn.lz" ]; 
 	then 
 		rm $F #> NUL
 		echo PARENT ${PWD}
@@ -275,6 +275,44 @@ echo "All LZ files have been decompressed"
 echo "Do your Edits now."
 # nemo $dp0/ExtractedRomFS" #Open folder.. Dunno wether I should do this. Disabled for now.
 echo
-pause 'Press any key to continue with recompressing and rebuilding.'
+pause 'Press Enter to continue with recompressing and rebuilding.'
 
-:RECOMP
+RECOMP:
+cd "$dp0"
+echo LZ Recompressionlog [$dp0] >> $LogFile
+echo =====================================================>> $LogFile
+cntT=0
+cntS=0
+#title Home Menu Rebuilding Tool [Compressor]
+shopt -s nullglob
+for F in $(find ./Extracted[RE][ox][me]FS -name '*lz') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
+do
+    d=$(dirname -- "$F")
+    echo FILE $F
+    echo DIR $d
+	cntT=$(($cntT+1))
+	fn=$(basename $F .lz) #E.g. miiverse_intro
+	file=$(echo "$fn+LZ.bin" | tr '+' '_') #E.g. miiverse_intro_LZ.bin ; $fn_LZ.bin is not possible in bash.
+	echo "Compressing: $file"
+	wine "$HMRTdir/3dstool.exe" -zvf "$F" --compress-type lzex --compress-out "$file"
+	if [ -e "$file" ]; 
+    then 
+		rm $F #> NUL
+		echo PARENT ${PWD}
+		mv "$file" $d/"$file"
+		echo $(date +%s) $F compressed! >> $LogFile
+		cntS=$(($cntS+1))
+    fi
+done
+echo $(date +%s) Finished $cntS/$cntT compressed >> $LogFile
+echo =====================================================>> $LogFile
+cd $HMRTdir
+if [ "$usrchoice" == 2 ]; then
+    break
+fi
+if [ "$usrchoice" != 8 ]; then
+    cd "$dp0"
+    jumpto STARTEN
+fi
+
+BUILD:

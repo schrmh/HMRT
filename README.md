@@ -7,6 +7,8 @@ Home Menu Rebuilding Tool (HMRT) v0.8
 This is WIP!  
 Feel free to contribute (e.g. code or tutorials)  
 
+Everything within HMRT.sh should work (except xorpads part of step 1 maybe since I wasn't able to check that yet)
+
 ----
   
 #### Credits:   
