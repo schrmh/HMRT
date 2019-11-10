@@ -72,6 +72,11 @@ start:
 # FILES: if ! [ -e "$file" ]; then fi 
 # DIRECTORIES: if [ ! -d "$DIRECTORY" ]; then fi
 
+# if exist *.extension"
+# https://stackoverflow.com/a/3856879
+# count=`ls -1 *.flac 2>/dev/null | wc -l`
+# if [ $count != 0 ]; then fi
+
 # set /p variablename="TEXT"
 # https://ryanstutorials.net/bash-scripting-tutorial/bash-input.php
 # https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
@@ -207,9 +212,10 @@ fi
 cd $HMRTdir #cases didn't work.. this is why we change dir now..
 rm *.0000.*
 wine ctrtool.exe "$ciaName.cia" --content=Content
-shopt -s nullglob
+shopt -s nullglob #Guard; exit without trying to process a non-existent file: https://stackoverflow.com/a/14505622
 for S in *.0000.* #set ~nxS name and extension of S
 do
+ echo "cxi0: $S"
     cxi0=$S
 done
 wine 3dstool.exe -xvtf cxi $cxi0 --header NCCH.Header --exh DecryptedExHeader.bin --exefs DecryptedExeFS.bin --romfs DecryptedRomFS.bin --logo Logo.bcma.LZ --plain PlainRGN.bin
@@ -219,7 +225,6 @@ wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
 if ! [ -d "../ExtractedRomFS" ]; then
     echo "Contact me @derberg:matrix.org"
     #dpnxF d‎rive, p‎ath, base‎n‎ame and e‎x‎tension of the current file.
-	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
 	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
 	for F in "../xorpads/*exefs_norm.xorpad"; do efsxor=$(readlink -f $F); done
 	for F in "../xorpads/*exheader.xorpad"; do exhxor=$(readlink -f $F); done
@@ -278,6 +283,7 @@ echo
 pause 'Press Enter to continue with recompressing and rebuilding.'
 
 RECOMP:
+recomp() {
 cd "$dp0"
 echo LZ Recompressionlog [$dp0] >> $LogFile
 echo =====================================================>> $LogFile
@@ -314,5 +320,69 @@ if [ "$usrchoice" != 8 ]; then
     cd "$dp0"
     jumpto STARTEN
 fi
+}
+recomp
 
 BUILD:
+#title Home Menu Rebuilding Tool [Building]
+if [ -z "$expName" ]; 
+then
+    echo "No name specified for the CIA file."
+	echo "You can specify a default name"
+	echo "in the USER VARIABLES.(example ciaName=HomeMenu^)"
+	echo
+	read -p "Enter filename (no extension): " expName
+fi
+cd $HMRTdir
+rm ../ExtractedRomFS/*.bak #I guess files created by some hex editor. But why only in that folder?
+count=`ls -1 ../xorpads/*.xorpad 2>/dev/null | wc -l`
+if [ $count != 0 ]
+then
+    echo "Calling RECOMP"
+    recomp #Sub routine; call recomp function. Dunno wether there is a way with labels without additional if statements..
+fi
+wine 3dstool.exe -cvtf romfs CustomRomFS.bin --romfs-dir ../ExtractedRomFS
+wine 3dstool.exe -czvtf exefs CustomExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
+for S in *.0000.* #set ~nxS name and extension of S
+do
+ echo "cxi0: $S"
+    cxi0=$S
+done
+
+echo "$expName.cia will be the path to your new cia."
+count=`ls -1 ../xorpads/*.xorpad 2>/dev/null | wc -l`
+if [ $count != 0 ]
+then 
+    echo "Contact me @derberg:matrix.org :)"
+	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exefs_norm.xorpad"; do efsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exheader.xorpad"; do exhxor=$(readlink -f $F); done	
+	wine 3dstool.exe -cvtf cxi "$cxi0" --header "$encheader" --exh DecryptedExHeader.bin --plain PlainRGN.bin --exefs CustomExeFS.bin --romfs CustomRomFS.bin --exh-xor "$exhxor" --exefs-xor "$efsxor" --romfs-xor "$rfsxor"
+	if [ "$usrchoice" == 8 ]; then
+        fbiblock=""
+    fi
+else
+    wine 3dstool.exe -cvtf cxi "$cxi0" --header NCCH.Header --exh DecryptedExHeader.bin --plain PlainRGN.bin --exefs CustomExeFS.bin --romfs CustomRomFS.bin
+	echo
+	echo Missing XORpads to build encrypted CIA.
+	echo CIA will not be encrypted.
+	echo You need to use Decrypt9 or GodMode9 to encrypt CIA.
+	echo -e "\033[1;31mIf you do not encrypt it before installing your 3DS will softbrick. \033[0m"
+	echo "(Read https://axities.github.io/ Section VI)"
+	echo This CIA is only for the firmware version your device is on.
+    echo -e "\033[1;31mIf the 3DS version changes or the region is different it will softbrick. \033[0m"
+	echo Reinstall the original HomeMenu before updating your device.
+	echo -e "If you seek for help: \033[1;34mhttps://discord.gg/0z7IGZ5Sv3D0mEN0\033[0m"
+	echo -e "(or \033[1;37mhttps://matrix.to/#/+custom-3ds-assets:matrix.org\033[0m)"
+	
+	pause 'Press Enter to finish & to return to the menu' #>nul
+    if [ "$usrchoice" == 8 ]; then
+        fbiblock="ON"
+    fi
+fi
+wine makerom.exe -f cia -content "$cxi0":0:$RANDOM -o "$expName.cia" #%cxi0%:0:%RANDOM% WTF? RANDOM?!
+if [ "$usrchoice" != 8 ]; then
+    cd "$dp0"
+    jumpto STARTEN
+fi
+echo.
