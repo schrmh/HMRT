@@ -7,7 +7,10 @@ Home Menu Rebuilding Tool (HMRT) v0.8
 This is WIP!  
 Feel free to contribute (e.g. code or tutorials)  
 
-Everything within HMRT.sh should work (except xorpads part of step 1 maybe since I wasn't able to check that yet)
+A full rebuild doesn't work yet and will lead to a softbrick.
+I will investigate which part is wrong by testing each step individually (and doing all other steps in a Windows VM) when I have time.
+I don't plan to test the xorpad parts soon and I would be glad if you could test them for me.
+
 
 ----
   
