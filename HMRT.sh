@@ -334,13 +334,16 @@ then
 	read -p "Enter filename (no extension): " expName
 fi
 cd $HMRTdir
-rm ../ExtractedRomFS/*.bak #I guess files created by some hex editor. But why only in that folder?
+#rm ../ExtractedRomFS/*.bak #I guess files created by some hex editor. But why only in that folder?
+pause
 count=`ls -1 ../xorpads/*.xorpad 2>/dev/null | wc -l`
-if [ $count != 0 ]
+if [ "$count" -ne 0 ]
 then
     echo "Calling RECOMP"
+    pause
     recomp #Sub routine; call recomp function. Dunno wether there is a way with labels without additional if statements..
 fi
+pause
 wine 3dstool.exe -cvtf romfs CustomRomFS.bin --romfs-dir ../ExtractedRomFS
 wine 3dstool.exe -czvtf exefs CustomExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
 for S in *.0000.* #set ~nxS name and extension of S
