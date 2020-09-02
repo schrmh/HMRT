@@ -159,40 +159,40 @@ echo
 echo ">      Press your choice [Number]: "
 clear
 # https://askubuntu.com/questions/1705/how-can-i-create-a-select-menu-in-a-shell-script
-choice=("1" "2" "3" "4" "5" "6" "7" "8" "9" "Q")
+choice=("Extract CIA" "Build encrypted CIA" "Clean Folder {WIP}" "Install via FBI (Network Install) {WIP}" "Decompress all LZ files" "Recompress all LZ files" "Copy to SD (Auto-detect) {WIP}" "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}" "Generate ncchinfo.bin {WIP}" "Exit program")
 select usrchoice in "${choice[@]}"
 do
     case $usrchoice in
-        "1")
+        "Extract CIA") #1
             jumpto EXTRACT
             ;;
-        "2")
+        "Build encrypted CIA") #2
             jumpto BUILD
             ;;
-        "3")
+        "Clean Folder {WIP}") #3
             jumpto CLEAN
             ;;
-        "4")
+        "Install via FBI (Network Install) {WIP}") #4
             jumpto FBI
             ;;
-        "5")
+        "Decompress all LZ files") #5
             jumpto DECOMP
             ;;
-        "6")
+        "Recompress all LZ files") #6
             jumpto RECOMP
             ;;
-        "7")
+        "Copy to SD (Auto-detect) {WIP}") #7
             jumpto COPYSD
             ;;
-        "8")
+        "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}") #8
             #Continue
             jumpto CONTINUE
             ;;
-        "9")
+        "Generate ncchinfo.bin {WIP}") #9
             jumpto NCCHINFO
             ;;
-        "Q") #may save us some lines later..
-            break
+        "Exit program") #10
+            exit
             ;;
         *) echo "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
     esac
@@ -253,7 +253,7 @@ do
     echo DIR $d
 	cntT=$(($cntT+1))
     fn=$(basename $F .bin) #E.g. miiverse_intro_LZ
-    file=$(echo $fn | tr '_' '.') #E.g. miiverse_intro.LZ ; maybe append tr 'LZ' 'lz'
+    file=$(echo $fn | sed 's/\(.*\)_/\1./') #E.g. miiverse_intro.LZ ; maybe append tr 'LZ' 'lz'
 	echo "Decompressing: $file"
 	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct... Is miiverse_intro_LZ.lz correct?
 	if [ -e "$fn.lz" ]; 
@@ -291,14 +291,14 @@ cntT=0
 cntS=0
 #title Home Menu Rebuilding Tool [Compressor]
 shopt -s nullglob
-for F in $(find ./Extracted[RE][ox][me]FS -name '*lz') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
+for F in $(find ./Extracted[RE][ox][me]FS -iname '*lz') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
 do
     d=$(dirname -- "$F")
     echo FILE $F
     echo DIR $d
 	cntT=$(($cntT+1))
-	fn=$(basename $F .lz) #E.g. miiverse_intro
-	file=$(echo "$fn+LZ.bin" | tr '+' '_') #E.g. miiverse_intro_LZ.bin ; $fn_LZ.bin is not possible in bash.
+	[ "$d/$(basename $F .lz).lz" = "$F" ] && fn=$(basename $F .lz) || fn=$(basename $F .LZ) #Linux || Windows; E.g. miiverse_intro
+	file=$(echo "$fn+LZ.bin" | sed 's/\(.*\)+/\1_/') #E.g. miiverse_intro_LZ.bin ; $fn_LZ.bin is not possible in bash.
 	echo "Compressing: $file"
 	wine "$HMRTdir/3dstool.exe" -zvf "$F" --compress-type lzex --compress-out "$file"
 	if [ -e "$file" ]; 
@@ -335,15 +335,15 @@ then
 fi
 cd $HMRTdir
 #rm ../ExtractedRomFS/*.bak #I guess files created by some hex editor. But why only in that folder?
-pause
-count=`ls -1 ../xorpads/*.xorpad 2>/dev/null | wc -l`
+pause "Press enter once  {WIP: Move to BUILD maybe?}"
+count=`find ../ExtractedRomFS -maxdepth 1 -type f -name "*.lz" | wc -l`
 if [ "$count" -ne 0 ]
 then
     echo "Calling RECOMP"
-    pause
+    pause "Enter"
     recomp #Sub routine; call recomp function. Dunno wether there is a way with labels without additional if statements..
 fi
-pause
+pause "Press enter once again {WIP: REPLACE maybe?}"
 wine 3dstool.exe -cvtf romfs CustomRomFS.bin --romfs-dir ../ExtractedRomFS
 wine 3dstool.exe -czvtf exefs CustomExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
 for S in *.0000.* #set ~nxS name and extension of S
