@@ -1,15 +1,13 @@
 #!/bin/bash
-#include this boilerplate
-function jumpto
-{
-    #echo UNSER $PWD
+jumpto () {
     label=$1
     cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
     eval "$cmd"
     exit
 }
-function pause(){
-   read -p "$*"
+pause(){
+   echo -n "$*"
+   read useless #POSIX eventually https://stackoverflow.com/a/54082655/7031100 but after switching to dialog we can remove this
 }
 
 start=${1:-"start"}
@@ -30,13 +28,13 @@ start:
 # Or better just to use dirname $0?
 
 # if NOT [%1]==[] () checks wether parameter is NOT empty
-# https://www.ibm.com/support/knowledgecenter/de/ssw_aix_72/osmanagement/korn_shell_conditional_exp.html
+# https://www.ibm.com/support/knowledgecenter/de/ssw_aix_72/osmanagement/korn_shell_conditional_exp.htexitml
 # https://www.cyberciti.biz/faq/unix-linux-bash-script-check-if-variable-is-empty/
 # https://developer.ibm.com/tutorials/l-bash-parameters/
 # Kind of equivalent?: if [ -n "$1" ] then fi
 
 # %~x1 extends to the extension e.g. .txt
-# https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bash
+# https://stackoverflow.com/questions/965053/extract-filename-and-extension-in-bashexit
 # Kind pf equivalent?: $(echo  $1  | sed 's/.*\././')
 
 
@@ -44,6 +42,10 @@ start:
 # https://www.imagemagick.org/Usage/windows/
 # Kind pf equivalent?: basename /path/to/dir/filename.txt .txt
 # Yes this doesn't give the path but this may be not needed..
+
+# %%~dpnxF expands to d‎rive, p‎ath, base‎n‎ame and e‎x‎tension of the current file (full path).
+# https://stackoverflow.com/questions/5642021/batch-process-all-files-in-directory
+# Equivalent: readlink -f "$F"
 
 # !variable!
 # https://stackoverflow.com/questions/14354502/difference-between-variable-and-variable-in-batch-file
@@ -201,43 +203,58 @@ done
 CONTINUE:
 EXTRACT:
 #title Home Menu Rebuilding Tool [Extracting]
-if ! [ -e "$(basename $ciaName .cia).cia" ]; then
-    echo "Couldn't find CIA file."
-	echo "You can specify a default CIA Name"
-	echo "in the USER VARIABLES.(example ciaName=HomeMenu^)"
-	echo "Or simply drag a CIA to extract onto this Tool."
+[ ! -e "$(basename $ciaName .cia).cia" ] && {
+    echo "$(tput setaf 9)Couldn't find $(tput setaf 1)$(basename $ciaName .cia)$(tput setaf 9) CIA file.$(tput sgr0)"
+	echo "$(tput setaf 99)You can specify a default CIA name"
+	echo "in the USER VARIABLES $(tput setaf 93)(e.g. ciaName="$dp0/HomeMenu")$(tput setaf 99)."
+	echo "Alternatively drag a CIA to extract onto this tool. {WIP}" #WIP: https://stackoverflow.com/a/49500317/7031100
 	echo
-	read -p "Enter filename (no extension): " ciaName
-fi
+	echo -n "$(tput setaf 11)Enter filename (no extension):$(tput sgr0) " #WIP: make a menu to choose from
+	read ciaName
+	ciaName="$dp0/$ciaName"
+}
 cd $HMRTdir #cases didn't work.. this is why we change dir now..
-rm *.0000.*
-wine ctrtool.exe "$ciaName.cia" --content=Content
-shopt -s nullglob #Guard; exit without trying to process a non-existent file: https://stackoverflow.com/a/14505622
-for S in *.0000.* #set ~nxS name and extension of S
-do
- echo "cxi0: $S"
-    cxi0=$S
-done
-wine 3dstool.exe -xvtf cxi $cxi0 --header NCCH.Header --exh DecryptedExHeader.bin --exefs DecryptedExeFS.bin --romfs DecryptedRomFS.bin --logo Logo.bcma.LZ --plain PlainRGN.bin
-wine 3dstool.exe -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
-rm -rf ../ExtractedRomFS
-wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
-if ! [ -d "../ExtractedRomFS" ]; then
-    echo "Contact me @derberg:matrix.org"
-    #dpnxF d‎rive, p‎ath, base‎n‎ame and e‎x‎tension of the current file.
-	for F in "../xorpads/*romfs.xorpad"; do rfsxor=$(readlink -f $F); done
-	for F in "../xorpads/*exefs_norm.xorpad"; do efsxor=$(readlink -f $F); done
-	for F in "../xorpads/*exheader.xorpad"; do exhxor=$(readlink -f $F); done
-	wine 3dstool.exe -xvtf cxi "$cxi0" --header NCCH.Header --exh DecryptedExHeader.bin --exh-xor "$exhxor" --exefs DecryptedExeFS.bin --exefs-xor "$efsxor" --romfs DecryptedRomFS.bin --romfs-xor "$rfsxor" --plain PlainRGN.bin
-	wine 3dstool.exe -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
-	wine 3dstool.exe -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
-	if ! [ -e "$encheader" ]; then cp NCCH.Header $encheader; fi
-	encheader=NCCH.Header
-fi
-if [ "$usrchoice" != 8 ]; then
+rm -f *.0000.*
+./ctrtool "$ciaName.cia" --contents=Content >/dev/null || {
     cd "$dp0"
+    echo "$(tput setaf 9)$ciaName may not exist. Can't continue."
+    pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     jumpto STARTEN
-fi
+}
+for S in *.0000.*
+do
+    [ -f "$S" ] || break #https://stackoverflow.com/a/14505622 
+    echo "Saved cxi0: $S within $HMRTdir"
+    cxi0=$S #WIP: What if we have more than one file?
+done
+[ -z $cxi0 ] && {
+    echo "$(tput setaf 9)This should never happen. Were files matching to *.0000.* removed? Contact @derberg:matrix.org$(tput sgr0)" 
+    cd "$dp0"
+    pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
+    jumpto STARTEN
+}
+./3dstool -xvtf cxi $cxi0 --header NCCH.Header --exh DecryptedExHeader.bin --exefs DecryptedExeFS.bin --romfs DecryptedRomFS.bin --logo Logo.bcma.lz --plain PlainRGN.bin | sed "s/INFO: logoregion is not exists, Logo.bcma.lz will not be create/$(tput setaf 99)INFO: Some CXI doesn't have a logoregion; Logo.bcma.lz won't be created. This is not an error.$(tput sgr0)/"
+./3dstool -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
+rm -rf ../ExtractedRomFS
+./3dstool -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
+[ ! -d "../ExtractedRomFS" ] && {
+    echo "$(tput setaf 9)Missing ExtractedRomFS directory. Contact @derberg:matrix.org$(tput sgr0)"
+    #WIP: What about multiple files? Does this part even work?
+	for F in "../xorpads/*romfs.xorpad"; do [ -f "$F" ] || break; rfsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exefs_norm.xorpad"; do [ -f "$F" ] || break; efsxor=$(readlink -f $F); done
+	for F in "../xorpads/*exheader.xorpad"; do [ -f "$F" ] || break; exhxor=$(readlink -f $F); done
+	./3dstool -xvtf cxi "$cxi0" --header NCCH.Header --exh DecryptedExHeader.bin --exh-xor "$exhxor" --exefs DecryptedExeFS.bin --exefs-xor "$efsxor" --romfs DecryptedRomFS.bin --romfs-xor "$rfsxor" --plain PlainRGN.bin
+	./3dstool -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
+	./3dstool -xvtf romfs DecryptedRomFS.bin --romfs-dir ../ExtractedRomFS
+	[ ! -e "$encheader" ] && cp NCCH.Header $encheader
+	encheader=NCCH.Header
+}
+echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
+[ "$usrchoice" != 8 ] && {
+    cd "$dp0"
+    pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
+    jumpto STARTEN
+}
 DECOMP:
 cd $dp0
 echo "LZ Decompressionlog [$dp0]" >> $LogFile
@@ -332,6 +349,7 @@ then
 	echo "in the USER VARIABLES.(example ciaName=HomeMenu^)"
 	echo
 	read -p "Enter filename (no extension): " expName
+	echo $expName
 fi
 cd $HMRTdir
 #rm ../ExtractedRomFS/*.bak #I guess files created by some hex editor. But why only in that folder?
