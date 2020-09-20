@@ -19,6 +19,8 @@ Next steps for GNU/Linux include
 - Use dialog for a better UI
 - Try it on Android.. Maybe rewrite in C if it doesn't work?
 - Replace parameters like `--content` with the correct ones. ctrtool expands, so we could e.g. use `--co` instead of `--contents`, but we shouldn't.
+- Maybe add log for EXTRACT
+- Make finished steps more clear (Maybe put strings in array and display the step name?)
 
 ----
   

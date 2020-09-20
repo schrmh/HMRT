@@ -262,40 +262,38 @@ echo =====================================================>> $LogFile
 cntT=0
 cntS=0
 #title Home Menu Rebuilding Tool [Decompressor]
-shopt -s nullglob
+echo "Decompressing files in sub folders within ${PWD}"
 for F in $(find ./Extracted[RE][ox][me]FS -name '*LZ.bin') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
 do  
     d=$(dirname -- "$F")
-    echo FILE $F
-    echo DIR $d
 	cntT=$(($cntT+1))
     fn=$(basename $F .bin) #E.g. miiverse_intro_LZ
-    file=$(echo $fn | sed 's/\(.*\)_/\1./') #E.g. miiverse_intro.LZ ; maybe append tr 'LZ' 'lz'
-	echo "Decompressing: $file"
-	wine "$HMRTdir/3dstool.exe" -uvf "$F" --compress-type lzex --compress-out "$fn.lz" #> NUL #check if correct... Is miiverse_intro_LZ.lz correct?
-	if [ -e "$fn.lz" ]; 
-	then 
-		rm $F #> NUL
-		echo PARENT ${PWD}
-		mv $fn.lz $d/$(basename $file .LZ).lz
-		echo $(date +%s) $F "decompressed!" >> $LogFile #unixtime
+    file="$(basename $(echo $fn | sed 's/\(.*\)_/\1./') .LZ).lz" #E.g. miiverse_intro.lz
+    printf '%s\t→ %s\n' "$(basename $F)" "$d/$file" | expand -t 35
+	"$HMRTdir/3dstool" -uvf "$F" --compress-type lzex --compress-out "$fn.lz"
+	[ -e "$fn.lz" ] && {
+		rm $F
+		mv "$fn.lz" "$d/$file"
+		printf '%s\t→ %s\n' "$(date +%s) $(basename $F)" "$d/$file" | expand -t 45 >> $LogFile #unixtime
 		cntS=$(($cntS+1))
-    else
-		echo $(date +%s) $F "couldn't be decompressed" >> $LogFile #unixtime
-	fi
+    } || echo "$(date +%s) $F couldn't be decompressed" >> $LogFile #unixtime
 done
 echo $(date +%s) "Finished $cntS/$cntT decompressed" >> $LogFile #unixtime
 echo =====================================================>> $LogFile
-cd $HMRTdir
-if [ "$usrchoice" != 8 ]; then
-    cd "$dp0"
-    jumpto STARTEN
-fi
 
-echo "Contents of the CIA file have been extracted"
-echo "All LZ files have been decompressed"
-echo "Do your Edits now."
-# nemo $dp0/ExtractedRomFS" #Open folder.. Dunno wether I should do this. Disabled for now.
+[ "$cntT" = 0 ] && echo "$(tput setaf 1)There were no LZ .bin files to decompress. 
+$([ $(find . -name "*.lz" | wc -l) != 0 ] && echo "$(tput setaf 99)However, I found $(find . -name "*.lz" | wc -l) .lz files that may have been decompressed before.
+Try to edit them." || echo "$(tput setaf 99)Forgot to extract the CIA?")" || echo "$(tput setaf 99)All extracted LZ .bin files have been decompressed.
+Do your edits now."
+cd $HMRTdir
+
+echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
+[ "$usrchoice" != 8 ] && {
+    cd "$dp0"
+    pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
+    jumpto STARTEN
+}
+
 echo
 pause 'Press Enter to continue with recompressing and rebuilding.'
 
