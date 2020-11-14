@@ -30,8 +30,9 @@ Next steps for GNU/Linux include
 - Call HMRT options directly from command line
 - Add a tool that lets users easily search for Strings, Offsets, Hex values, Words (from a dictionary; regex?) within all files
 - Add an option to patch files with new values (mass replace matching values; individual values written in a file; presets written in a file like "Background" or "BtnBase")
+- Option to inject compressed lz files like in https://cdn.discordapp.com/attachments/265917056837353472/600180023986487296/Modded_Home_Menu_3DS.zip. Either by a file structure that is written in a file or by searching, if that file doesn't exist)
 - If possible, run generated cia in citra?
-- Rewrite some of the used tools or turn everything into a single C project.
+- Rewrite some of the used tools or turn everything into a single C project. e
 
 ----
   
