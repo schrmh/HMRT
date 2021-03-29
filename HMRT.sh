@@ -165,35 +165,35 @@ choice=("Extract CIA" "Build encrypted CIA" "Clean Folder {WIP}" "Install via FB
 select usrchoice in "${choice[@]}"
 do
     case $usrchoice in
-        "Extract CIA") #1
+        "Extract CIA") #0
             jumpto EXTRACT
             ;;
-        "Build encrypted CIA") #2
+        "Build encrypted CIA") #1
             jumpto BUILD
             ;;
-        "Clean Folder {WIP}") #3
+        "Clean Folder {WIP}") #2
             jumpto CLEAN
             ;;
-        "Install via FBI (Network Install) {WIP}") #4
+        "Install via FBI (Network Install) {WIP}") #3
             jumpto FBI
             ;;
-        "Decompress all LZ files") #5
+        "Decompress all LZ files") #4
             jumpto DECOMP
             ;;
-        "Recompress all LZ files") #6
+        "Recompress all LZ files") #5
             jumpto RECOMP
             ;;
-        "Copy to SD (Auto-detect) {WIP}") #7
+        "Copy to SD (Auto-detect) {WIP}") #6
             jumpto COPYSD
             ;;
-        "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}") #8
+        "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}") #7
             #Continue
             jumpto CONTINUE
             ;;
-        "Generate ncchinfo.bin {WIP}") #9
+        "Generate ncchinfo.bin {WIP}") #8
             jumpto NCCHINFO
             ;;
-        "Exit program") #10
+        "Exit program") #9
             exit
             ;;
         *) echo "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
@@ -249,8 +249,8 @@ rm -rf ../ExtractedRomFS
 	[ ! -e "$encheader" ] && cp NCCH.Header $encheader
 	encheader=NCCH.Header
 }
-echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
-[ "$usrchoice" != 8 ] && {
+echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)EXTRACT $(tput sgr0)"
+[ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     jumpto STARTEN
@@ -287,8 +287,8 @@ Try to edit them." || echo "$(tput setaf 99)Forgot to extract the CIA?")" || ech
 Do your edits now."
 cd $HMRTdir
 
-echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
-[ "$usrchoice" != 8 ] && {
+echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)DECOMPRESS $(tput sgr0)"
+[ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     jumpto STARTEN
@@ -337,11 +337,11 @@ If you need help or you found an error, contact @derberg:matrix.org.")" || echo 
 Move on by e.g. building a encrypted CIA now."
 cd $HMRTdir
 
-echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
-[ "$usrchoice" == 2 ] && { #TODO: Maybe RECOMP should not be called in BUILD?
+echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)COMPRESS $(tput sgr0)"
+[ "$usrchoice" == "${choice[1]}" ] && { #TODO: Maybe RECOMP should not be called in BUILD?
     break
 }
-[ "$usrchoice" != 8 ] && {
+[ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     jumpto STARTEN
@@ -388,7 +388,7 @@ then
 	for F in "../xorpads/*exefs_norm.xorpad"; do efsxor=$(readlink -f $F); done
 	for F in "../xorpads/*exheader.xorpad"; do exhxor=$(readlink -f $F); done	
 	wine 3dstool.exe -cvtf cxi "$cxi0" --header "$encheader" --exh DecryptedExHeader.bin --plain PlainRGN.bin --exefs CustomExeFS.bin --romfs CustomRomFS.bin --exh-xor "$exhxor" --exefs-xor "$efsxor" --romfs-xor "$rfsxor"
-	if [ "$usrchoice" == 8 ]; then
+	if [ "$usrchoice" == "${choice[7]}" ]; then
         fbiblock=""
     fi
 else
@@ -406,12 +406,12 @@ else
 	echo -e "(or \033[1;37mhttps://matrix.to/#/+custom-3ds-assets:matrix.org\033[0m)"
 	
 	pause 'Press Enter to finish & to return to the menu' #>nul
-    if [ "$usrchoice" == 8 ]; then
+    if [ "$usrchoice" == "${choice[7]}" ]; then
         fbiblock="ON"
     fi
 fi
 wine makerom.exe -f cia -content "$cxi0":0:$RANDOM -o "$expName.cia" #%cxi0%:0:%RANDOM% WTF? RANDOM?!
-if [ "$usrchoice" != 8 ]; then
+if [ "$usrchoice" != "${choice[7]}" ]; then
     cd "$dp0"
     jumpto STARTEN
 fi

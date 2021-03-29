@@ -6,7 +6,8 @@ Home Menu Rebuilding Tool (HMRT) v0.8.1
   
 This is WIP but useable!  
 Feel free to contribute (e.g. code or tutorials)  
-
+[29th March 2021]: Fixed full rebuild. Problem was that the variable content changed cause at some point I switched from numbers to strings in the case.  
+However, I did not test the created HomeMenu after this change but don't think something broke. Btw. those errors at the last step — the BUILD step — are normal cause WINE is still used there!  
 [14th November 2020]: Broke full rebuild with some changes. Choose previous commit or call each step individually until I fix it.  
 Added `bclimtool` and `darctool` and a script `extractLZ` so that GNU/Linux users don't need to wait until Kuriimu2 (which uses dotnetcore!) finally works to be able to view PNG files within bclim files..  
 Useful tip: Use `magick display 'vid:*.png'` (needs `imagemagick`) to view all png files in a folder at once.  
