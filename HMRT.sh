@@ -305,36 +305,47 @@ echo =====================================================>> $LogFile
 cntT=0
 cntS=0
 #title Home Menu Rebuilding Tool [Compressor]
-shopt -s nullglob
+echo "Compressing files in sub folders within ${PWD}"
 for F in $(find ./Extracted[RE][ox][me]FS -iname '*lz') #recursive within Extracted folders (R or E, o or x, m or e; not a perfect solution tho)
 do
     d=$(dirname -- "$F")
-    echo FILE $F
-    echo DIR $d
 	cntT=$(($cntT+1))
 	[ "$d/$(basename $F .lz).lz" = "$F" ] && fn=$(basename $F .lz) || fn=$(basename $F .LZ) #Linux || Windows; E.g. miiverse_intro
-	file=$(echo "$fn+LZ.bin" | sed 's/\(.*\)+/\1_/') #E.g. miiverse_intro_LZ.bin ; $fn_LZ.bin is not possible in bash.
-	echo "Compressing: $file"
-	wine "$HMRTdir/3dstool.exe" -zvf "$F" --compress-type lzex --compress-out "$file"
-	if [ -e "$file" ]; 
-    then 
-		rm $F #> NUL
-		echo PARENT ${PWD}
-		mv "$file" $d/"$file"
-		echo $(date +%s) $F compressed! >> $LogFile
+	file=$(echo "$fn+LZ.bin" | sed 's/\(.*\)+/\1_/') #E.g. miiverse_intro_LZ.bin ; $fn_LZ.bin is not possible in shell script.
+	printf '%s\t→ %s\n' "$(basename $F)" "$d/$file" | expand -t 35
+	"$HMRTdir/3dstool" -zvf "$F" --compress-type lzex --compress-out "$file"
+	[ -e "$file" ] && {
+		rm $F
+		mv "$file" "$d/$file"
+		printf '%s\t→ %s\n' "$(date +%s) $(basename $F)" "$d/$file" | expand -t 45 >> $LogFile #unixtime
 		cntS=$(($cntS+1))
-    fi
+    } || echo "$(date +%s) $F couldn't be (re)compressed" >> $LogFile #unixtime
 done
 echo $(date +%s) Finished $cntS/$cntT compressed >> $LogFile
 echo =====================================================>> $LogFile
+[ "$cntT" = 0 ] && echo "$(tput setaf 1)There were no .lz files to (re)compress. 
+$([ $(find . -name "*.bin" -not -path "./HMRT/*" | wc -l) != 0 ] && echo "$(tput setaf 99)However, I found $(find . -name "*.bin" -not -path "./HMRT/*" | wc -l) .bin files that may have been compressed before.
+Try to decompress them and then do your edits...
+...or move on and build a encrypted CIA now." || echo "$(tput setaf 99)Either you are not following a valid order or something is wrong.
+$([ $(find . -name "*.bin" | wc -l) != 0 ] && echo "You have some leftover files in ./HMRT. Maybe clear Content* and newer files: 
+$(tput setaf 93)$(find ./HMRT/Content*)
+$(find ./HMRT -type f -newer ./HMRT/Content*)$(tput setaf 99)
+You may also continue without doing this since I don't think that leaving them breaks anything.")
+Extract the CIA to get the directories 'ExtractedRomFS' and 'ExtractedExeFS'.
+Those should either contain .bin or .lz files (could also be uppercase extensions).
+If you need help or you found an error, contact @derberg:matrix.org.")" || echo "$(tput setaf 99)All .lz files have been (re)compressed.
+Move on by e.g. building a encrypted CIA now."
 cd $HMRTdir
-if [ "$usrchoice" == 2 ]; then
+
+echo "$(tput setaf 10)Finished step $REPLY$(tput sgr0)"
+[ "$usrchoice" == 2 ] && { #TODO: Maybe RECOMP should not be called in BUILD?
     break
-fi
-if [ "$usrchoice" != 8 ]; then
+}
+[ "$usrchoice" != 8 ] && {
     cd "$dp0"
+    pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     jumpto STARTEN
-fi
+}
 }
 recomp
 
