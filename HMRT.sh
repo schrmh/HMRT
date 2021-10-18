@@ -203,6 +203,7 @@ done
 CONTINUE:
 EXTRACT:
 #title Home Menu Rebuilding Tool [Extracting]
+backup_ciaName=$ciaName
 [ ! -e "$(basename $ciaName .cia).cia" ] && {
     echo "$(tput setaf 9)Couldn't find $(tput setaf 1)$(basename $ciaName .cia)$(tput setaf 9) CIA file.$(tput sgr0)"
 	echo "$(tput setaf 99)You can specify a default CIA name"
@@ -217,8 +218,11 @@ cd $HMRTdir #cases didn't work.. this is why we change dir now..
 rm -f *.0000.*
 ./ctrtool "$ciaName.cia" --contents=Content >/dev/null || {
     cd "$dp0"
-    echo "$(tput setaf 9)$ciaName may not exist. Can't continue."
+    echo "$(tput setaf 1)$ciaName.cia $(tput setaf 9)may not exist. Can't continue."
+    echo "$(tput setaf 99)Files in this folder:$(tput setaf 93)"
+    ls
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
+    ciaName=$backup_ciaName
     jumpto STARTEN
 }
 for S in *.0000.*
@@ -415,4 +419,4 @@ if [ "$usrchoice" != "${choice[7]}" ]; then
     cd "$dp0"
     jumpto STARTEN
 fi
-echo.
+echo . #Note: This is from line 189 of the BAT
