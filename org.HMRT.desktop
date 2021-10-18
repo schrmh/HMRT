@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.5
+Name=Drop CIA here
+GenericName=Home Menu Rebuilding Tool starter
+Comment=Calls HMRT.sh. When a CIA is dropped, HMRT.sh will extract and decrompress it.
+Exec=sh -c "exec $(dirname %k)/HMRT.sh %f"
+Icon=utilities-terminal
+Terminal=true
+Type=Application

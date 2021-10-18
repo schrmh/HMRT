@@ -1,20 +1,8 @@
 #!/bin/bash
-jumpto () {
-    label=$1
-    cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
-    eval "$cmd"
-    exit
-}
 pause(){
    echo -n "$*"
    read useless #POSIX eventually https://stackoverflow.com/a/54082655/7031100 but after switching to dialog we can remove this
 }
-
-start=${1:-"start"}
-
-jumpto $start
-
-start:
 
 #Windows batch variables:
 # Overview: https://ss64.com/nt/syntax-args.html
@@ -84,131 +72,16 @@ start:
 # https://stackoverflow.com/questions/226703/how-do-i-prompt-for-yes-no-cancel-input-in-a-linux-shell-script
 # Kind of equivalent?: read -p "TEXT" variablename
 
+# ============ FUNCTIONS =============================
 
-
-
-#folder script is in. CAUTION: DO NOT ADD COMMENT AFTER THE NEXT LINE!
-#dp0=$(dirname "$(readlink -fn "$0")")
-
-dp0="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-#echo $dp0
-
-echo "Home Menu Rebuilding Tool [By TheDeKay & schrmh]"
-HMRTver=0.8-L1
-HMRTch="[Dev]"  
-
-#switch to shell script file's drive:
-cd "$dp0"
-if [ -n "$1" ]; #if parameter not empty
-then
-    ext=$(echo  $1  | sed 's/.*\././')
-
-    if [ $ext = ".cia" ]; then
-        ciaName=$dp0/$(basename $1 .cia) #@reader: remove $dp0/ if it doesn't work..
-        expName="$ciaName"_edited
-    elif [ $ext = ".bin" ]; then
-        jumpto LZDECOMPRESSOR
-    fi
-fi
-
-#for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do ( #sets the colours for the block above the options in the main menu; may be hard to do..
-#  set "DEL=%%a"
-#)
-
-
-# ============ USER VARIABLES =============================
-# ciaName: Input File (HomeMenu) NO EXTENSION
-# expName: Output File (HomeMenu_edited) NO EXTENSION
-# SDDrive: Letter for the SD Drive
-
-encheader=NCCH.encheader
-HMRTdir=$dp0/HMRT
-xordir=$dp0/xorpads
-LogFile="$dp0/LZ.log"
-ciaName="$dp0/HomeMenu" #doesn't work always..
-expName="$ciaName"_edited
-
-STARTEN:
-defIP=192.168.178.16
-
-# ========================================================
-
-#echo $HMRTdir
-#cd $HMRTdir
-usrchoice=0
-# title Home Menu Rebuilding Tool [By TheDeKay] #do later. Open new shell and set title
-clear
-#call :cPrint 7C #do later; may be hard
-echo "                                                                    Home Menu Rebuilding Tool v$HMRTver $HMRTch"
-#call :cPrint 79 "                                 
-echo "by TheDeKay & schrmh "
-#call :cPrint 71 
-echo "                                                                                                Thanks to Asia81 and Zan'"
-#call :cPrint 78 "     y
-echo "http://axities.github.io                     _________________________________________________________"
-echo
-echo   "[1] Extract CIA"
-echo   "[2] Build encrypted CIA"
-echo   "[3] Clean Folder"
-echo   "[4] Install via FBI (Network Install)"
-echo   "[5] Decompress all LZ files"
-echo   "[6] Recompress all LZ files"
-echo   "[7] Copy to SD (Auto-detect)"
-echo   "[8] Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4)"
-echo   "[9] Generate ncchinfo.bin"
-echo   "[Q] Exit program"
-echo
-echo ">      Press your choice [Number]: "
-clear
-# https://askubuntu.com/questions/1705/how-can-i-create-a-select-menu-in-a-shell-script
-choice=("Extract CIA" "Build encrypted CIA" "Clean Folder {WIP}" "Install via FBI (Network Install) {WIP}" "Decompress all LZ files" "Recompress all LZ files" "Copy to SD (Auto-detect) {WIP}" "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}" "Generate ncchinfo.bin {WIP}" "Exit program")
-select usrchoice in "${choice[@]}"
-do
-    case $usrchoice in
-        "Extract CIA") #0
-            jumpto EXTRACT
-            ;;
-        "Build encrypted CIA") #1
-            jumpto BUILD
-            ;;
-        "Clean Folder {WIP}") #2
-            jumpto CLEAN
-            ;;
-        "Install via FBI (Network Install) {WIP}") #3
-            jumpto FBI
-            ;;
-        "Decompress all LZ files") #4
-            jumpto DECOMP
-            ;;
-        "Recompress all LZ files") #5
-            jumpto RECOMP
-            ;;
-        "Copy to SD (Auto-detect) {WIP}") #6
-            jumpto COPYSD
-            ;;
-        "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}") #7
-            #Continue
-            jumpto CONTINUE
-            ;;
-        "Generate ncchinfo.bin {WIP}") #8
-            jumpto NCCHINFO
-            ;;
-        "Exit program") #9
-            exit
-            ;;
-        *) echo "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
-    esac
-done
-
-CONTINUE:
-EXTRACT:
+step_extract(){
 #title Home Menu Rebuilding Tool [Extracting]
 backup_ciaName=$ciaName
 [ ! -e "$(basename $ciaName .cia).cia" ] && {
     echo "$(tput setaf 9)Couldn't find $(tput setaf 1)$(basename $ciaName .cia)$(tput setaf 9) CIA file.$(tput sgr0)"
 	echo "$(tput setaf 99)You can specify a default CIA name"
 	echo "in the USER VARIABLES $(tput setaf 93)(e.g. ciaName="$dp0/HomeMenu")$(tput setaf 99)."
-	echo "Alternatively drag a CIA to extract onto this tool. {WIP}" #WIP: https://stackoverflow.com/a/49500317/7031100
+	echo "Alternatively drag a CIA to extract onto the $(tput setaf 93)Drop CIA here $(tput setaf 99)file (starts step 8)."
 	echo
 	echo -n "$(tput setaf 11)Enter filename (no extension):$(tput sgr0) " #WIP: make a menu to choose from
 	read ciaName
@@ -223,7 +96,7 @@ rm -f *.0000.*
     ls
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
     ciaName=$backup_ciaName
-    jumpto STARTEN
+    return
 }
 for S in *.0000.*
 do
@@ -235,7 +108,7 @@ done
     echo "$(tput setaf 9)This should never happen. Were files matching to *.0000.* removed? Contact @derberg:matrix.org$(tput sgr0)" 
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
-    jumpto STARTEN
+    return
 }
 ./3dstool -xvtf cxi $cxi0 --header NCCH.Header --exh DecryptedExHeader.bin --exefs DecryptedExeFS.bin --romfs DecryptedRomFS.bin --logo Logo.bcma.lz --plain PlainRGN.bin | sed "s/INFO: logoregion is not exists, Logo.bcma.lz will not be create/$(tput setaf 99)INFO: Some CXI doesn't have a logoregion; Logo.bcma.lz won't be created. This is not an error.$(tput sgr0)/"
 ./3dstool -xuvtf exefs DecryptedExeFS.bin --exefs-dir ../ExtractedExeFS --header ExeFS.Header
@@ -257,9 +130,10 @@ echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)EXTRACT $(tput sgr0)"
 [ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
-    jumpto STARTEN
 }
-DECOMP:
+}
+
+step_decompress(){
 cd $dp0
 echo "LZ Decompressionlog [$dp0]" >> $LogFile
 echo =====================================================>> $LogFile
@@ -295,14 +169,10 @@ echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)DECOMPRESS $(tput sgr
 [ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
-    jumpto STARTEN
+}
 }
 
-echo
-pause 'Press Enter to continue with recompressing and rebuilding.'
-
-RECOMP:
-recomp() {
+step_recompress() {
 cd "$dp0"
 echo LZ Recompressionlog [$dp0] >> $LogFile
 echo =====================================================>> $LogFile
@@ -343,17 +213,15 @@ cd $HMRTdir
 
 echo "$(tput setaf 10)Finished step $REPLY $(tput setaf 40)COMPRESS $(tput sgr0)"
 [ "$usrchoice" == "${choice[1]}" ] && { #TODO: Maybe RECOMP should not be called in BUILD?
-    break
+    return
 }
 [ "$usrchoice" != "${choice[7]}" ] && {
     cd "$dp0"
     pause "$(tput setaf 11)Press Enter to return to the main menu$(tput sgr0)"
-    jumpto STARTEN
 }
 }
-recomp
 
-BUILD:
+step_build(){
 #title Home Menu Rebuilding Tool [Building]
 if [ -z "$expName" ]; 
 then
@@ -372,7 +240,7 @@ if [ "$count" -ne 0 ]
 then
     echo "Calling RECOMP"
     pause "Enter"
-    recomp #Sub routine; call recomp function. Dunno wether there is a way with labels without additional if statements..
+    step_recompress #Sub routine; call recomp function. Dunno wether there is a way with labels without additional if statements..
 fi
 pause "Press enter once again {WIP: REPLACE maybe?}"
 wine 3dstool.exe -cvtf romfs CustomRomFS.bin --romfs-dir ../ExtractedRomFS
@@ -417,6 +285,128 @@ fi
 wine makerom.exe -f cia -content "$cxi0":0:$RANDOM -o "$expName.cia" #%cxi0%:0:%RANDOM% WTF? RANDOM?!
 if [ "$usrchoice" != "${choice[7]}" ]; then
     cd "$dp0"
-    jumpto STARTEN
 fi
-echo . #Note: This is from line 189 of the BAT
+}
+
+step_continue(){
+    step_extract && return
+    step_decompress && return
+    echo
+    pause 'Press Enter to continue with recompressing and rebuilding.'
+    step_recompress && return
+    step_build && return
+    echo . #Note: This is from line 189 of the BAT
+}
+
+# ============ FUNCTIONS END =============================
+
+#folder script is in
+dp0=$(dirname $(readlink /proc/$$/fd/255))
+#echo $dp0
+
+echo "Home Menu Rebuilding Tool [By TheDeKay & schrmh]"
+HMRTver=0.8-L1
+HMRTch="[Dev]"  
+
+#switch to shell script file's drive:
+cd "$dp0"
+#if [ -n "$1" ]; #if parameter not empty
+#then
+#    ext=$(echo  $1  | sed 's/.*\././')
+#
+#    if [ $ext = ".cia" ]; then
+#        ciaName=$dp0/$(basename $1 .cia) #@reader: remove $dp0/ if it doesn't work..
+#        expName="$ciaName"_edited
+#    elif [ $ext = ".bin" ]; then
+#        jumpto LZDECOMPRESSOR
+#    fi
+#fi
+
+#for /F "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do ( #sets the colours for the block above the options in the main menu; may be hard to do..
+#  set "DEL=%%a"
+#)
+
+
+# ============ USER VARIABLES =============================
+# ciaName: Input File (HomeMenu) NO EXTENSION
+# expName: Output File (HomeMenu_edited) NO EXTENSION
+# SDDrive: Letter for the SD Drive
+
+encheader=NCCH.encheader
+HMRTdir=$dp0/HMRT
+xordir=$dp0/xorpads
+LogFile="$dp0/LZ.log"
+ciaName="$dp0/HomeMenu" #doesn't work always..
+expName="$ciaName"_edited
+defIP=192.168.178.16
+
+# ========================================================
+[ -n "$1" ] && ciaName=$dp0/$(basename $1 .cia) && REPLY="8 (drag&drop)" && choice[7]=7 && usrchoice=7 && step_continue
+
+#echo $HMRTdir
+#cd $HMRTdir
+usrchoice=0
+# title Home Menu Rebuilding Tool [By TheDeKay] #do later. Open new shell and set title
+clear
+#call :cPrint 7C #do later; may be hard
+echo "                                                                    Home Menu Rebuilding Tool v$HMRTver $HMRTch"
+#call :cPrint 79 "                                 
+echo "by TheDeKay & schrmh "
+#call :cPrint 71 
+echo "                                                                                                Thanks to Asia81 and Zan'"
+#call :cPrint 78 "     y
+echo "http://axities.github.io                     _________________________________________________________"
+echo
+echo   "[1] Extract CIA"
+echo   "[2] Build encrypted CIA"
+echo   "[3] Clean Folder"
+echo   "[4] Install via FBI (Network Install)"
+echo   "[5] Decompress all LZ files"
+echo   "[6] Recompress all LZ files"
+echo   "[7] Copy to SD (Auto-detect)"
+echo   "[8] Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4)"
+echo   "[9] Generate ncchinfo.bin"
+echo   "[Q] Exit program"
+echo
+echo ">      Press your choice [Number]: "
+clear
+# https://askubuntu.com/questions/1705/how-can-i-create-a-select-menu-in-a-shell-script
+choice=("Extract CIA" "Build encrypted CIA" "Clean Folder {WIP}" "Install via FBI (Network Install) {WIP}" "Decompress all LZ files" "Recompress all LZ files" "Copy to SD (Auto-detect) {WIP}" "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}" "Generate ncchinfo.bin {WIP}" "Exit program")
+select usrchoice in "${choice[@]}"
+do
+    case $usrchoice in
+        "Extract CIA") #0
+            step_extract
+            ;;
+        "Build encrypted CIA") #1
+            step_build
+            ;;
+        "Clean Folder {WIP}") #2
+            CLEAN
+            ;;
+        "Install via FBI (Network Install) {WIP}") #3
+            FBI
+            ;;
+        "Decompress all LZ files") #4
+            step_decompress
+            ;;
+        "Recompress all LZ files") #5
+            step_recompress
+            ;;
+        "Copy to SD (Auto-detect) {WIP}") #6
+            COPYSD
+            ;;
+        "Full Rebuild (Steps: 1, 5, Edit, 6, 2, 3, 4) {3&4 WIP}") #7
+            #Continue
+            step_continue
+            ;;
+        "Generate ncchinfo.bin {WIP}") #8
+            NCCHINFO
+            ;;
+        "Exit program") #9
+            exit
+            ;;
+        *) pause "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
+    esac
+    REPLY=
+done
