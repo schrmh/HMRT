@@ -408,5 +408,28 @@ do
             ;;
         *) pause "Invalid option $REPLY. Press CTRL+C or write Q to break/quit.";; 
     esac
+    clear
+    [ -z "$(command -v git)" ] && {
+    echo "$(tput setaf 99)INFO: $(tput setaf 93)git$(tput setaf 99) is not installed on your system.
+Without $(tput setaf 93)git$(tput setaf 99) HMRT can't check whether there is a new HMRT version.
+This doesn't affect the functionality of this HMRT version.$(tput sgr0)"
+    } || { 
+        git fetch 2>/dev/null && {
+            HEADHASH=$(git rev-parse HEAD)
+            UPSTREAMHASH=$(git rev-parse master@{upstream})
+            [ -z "$UPSTREAMHASH" ] && { 
+                echo "$(tput setaf 99)INFO: HMRT might not be downloadable anymore from where you got it from. 
+This info might also pop up if you have no internet connection.
+This doesn't affect the functionality of this HMRT version.$(tput sgr0)" 
+            } || { 
+                [ "$HEADHASH" != "$UPSTREAMHASH" ] && {
+                    echo "$(tput setaf 99)INFO: Your HMRT version might not be up to date. Try $(tput setaf 93)git pull$(tput setaf 99) to update.$(tput sgr0)"
+                }
+            } || clear
+        } || {
+        echo "$(tput setaf 99)INFO: You won't get update notifications. 
+If you want them, get HMRT via $(tput setaf 93)git clone https://github.com/schrmh/HMRT$(tput sgr0)"
+        }
+    }
     REPLY=
 done
