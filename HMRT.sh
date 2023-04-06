@@ -270,7 +270,7 @@ else
 	echo CIA will not be encrypted.
 	echo You need to use Decrypt9 or GodMode9 to encrypt CIA.
 	echo -e "\033[1;31mIf you do not encrypt it before installing your 3DS will softbrick. \033[0m"
-	echo "(Read https://axities.github.io/ Section VI)"
+	echo "(Read https://3ds.codeberg.page/homemenu/ Section VI)"
 	echo This CIA is only for the firmware version your device is on.
     echo -e "\033[1;31mIf the 3DS version changes or the region is different it will softbrick. \033[0m"
 	echo Reinstall the original HomeMenu before updating your device.
