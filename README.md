@@ -1,5 +1,6 @@
 Home Menu Rebuilding Tool (HMRT) v0.8.1  
 =====================================  
+[Use it with this guide](https://3ds.codeberg.page/homemenu/)
 ### NOW FOR GNU/LINUX!  
 
 ----
